@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIM AI INC - Admin Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+body{background:#0a0a0a;color:#fff;font-family:Inter,sans-serif}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:16px}
+.btn{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;border:none}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+.btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
+.input{background:#2a2a2a;border:1px solid #3a3a3a;border-radius:8px;padding:10px;width:100%;color:#fff;margin-bottom:10px}
+.tab{padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.3s}
+.tab.active{border-bottom:2px solid #2563eb;color:#2563eb}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="p-4 bg-[#1a1a1a] border-b border-[#2a2a2a] flex justify-between items-center">
+  <h1 class="text-2xl font-bold">🔧 HIM AI INC Admin Panel</h1>
+  <button onclick="logout()" class="btn btn-danger">Logout</button>
+</div>
+
+<div id="loginDiv" class="flex items-center justify-center min-h-screen">
+  <div class="card w-96">
+    <h2 class="text-xl font-bold mb-4">Admin Login</h2>
+    <input type="email" id="adminEmail" placeholder="Admin Email" class="input">
+    <input type="password" id="adminPass" placeholder="Password" class="input">
+    <button onclick="adminLogin()" class="btn w-full">Login</button>
+  </div>
+</div>
+
+<div id="adminPanel" class="hidden">
+  <div class="flex gap-2 overflow-x-auto p-4 bg-[#111] border-b border-[#2a2a2a]">
+    <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    <div class="tab" onclick="switchTab('users')">👥 Users</div>
+    <div class="tab" onclick="switchTab('deposit')">💰 Deposit</div>
+    <div class="tab" onclick="switchTab('withdraw')">💸 Withdraw</div>
+    <div class="tab" onclick="switchTab('plans')">💎 Plans/VIP</div>
+    <div class="tab" onclick="switchTab('tasks')">✅ Tasks</div>
+    <div class="tab" onclick="switchTab('slider')">🖼️ Slider</div>
+    <div class="tab" onclick="switchTab('notice')">📢 Notice</div>
+    <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="p-4">
+    <div class="grid grid-cols-4 gap-4 mb-4">
+      <div class="card"><p class="text-gray-400 text-sm">Total Users</p><p class="text-3xl font-bold" id="totalUsers">0</p></div>
+      <div class="card"><p class="text-gray-400 text-sm">Total Deposit</p><p class="text-3xl font-bold text-green-400" id="totalDeposit">0</p></div>
+      <div class="card"><p class="text-gray-400 text-sm">Total Withdraw</p><p class="text-3xl font-bold text-red-400" id="totalWithdraw">0</p></div>
+      <div class="card"><p class="text-gray-400 text-sm">Pending</p><p class="text-3xl font-bold text-yellow-400" id="pendingCount">0</p></div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="tab-users" class="p-4 hidden">
+    <h3 class="text-xl font-bold mb-4">All Users</h3>
+    <div id="usersList"></div>
+  </div>
+
+  <!-- DEPOSIT -->
+  <div id="tab-deposit" class="p-4 hidden">
+    <h3 class="text-xl font-bold mb-4">Pending Deposits - bKash/Nagad</h3>
+    <div id="depositList"></div>
+  </div>
+
+  <!-- WITHDRAW -->
+  <div id="tab-withdraw" class="p-4 hidden">
+    <h3 class="text-xl font-bold mb-4">Pending Withdrawals</h3>
+    <div id="withdrawList"></div>
+  </div>
+
+  <!-- PLANS/VIP -->
+  <div id="tab-plans" class="p-4 hidden">
+    <div class="card mb-4">
+      <h3 class="font-bold mb-3">Add/Edit Plan</h3>
+      <input type="hidden" id="planId">
+      <input id="planName" placeholder="Plan Name VIP 1" class="input">
+      <input id="planPrice" type="number" placeholder="Price BDT" class="input">
+      <input id="planDaily" type="number" placeholder="Daily Profit BDT" class="input">
+      <input id="planDays" type="number" placeholder="Duration Days" class="input">
+      <button onclick="savePlan()" class="btn">Save Plan</button>
+    </div>
+    <div id="plansList"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="tab-tasks" class="p-4 hidden">
+    <div class="card mb-4">
+      <h3 class="font-bold mb-3">Add/Edit Task</h3>
+      <input type="hidden" id="taskId">
+      <input id="taskTitle" placeholder="Task Title" class="input">
+      <textarea id="taskDesc" placeholder="Description" class="input"></textarea>
+      <input id="taskReward" type="number" placeholder="Reward BDT" class="input">
+      <input id="taskVipLevel" type="number" placeholder="VIP Level Required" class="input" value="0">
+      <button onclick="saveTask()" class="btn">Save Task</button>
+    </div>
+    <div id="tasksList"></div>
+  </div>
+
+  <!-- SLIDER -->
+  <div id="tab-slider" class="p-4 hidden">
+    <div class="card mb-4">
+      <h3 class="font-bold mb-3">Add Slider Image</h3>
+      <input id="sliderUrl" placeholder="Image URL" class="input">
+      <button onclick="addSlider()" class="btn">Add Slider</button>
+    </div>
+    <div id="sliderList" class="grid grid-cols-3 gap-4"></div>
+  </div>
+
+  <!-- NOTICE -->
+  <div id="tab-notice" class="p-4 hidden">
+    <div class="card">
+      <h3 class="font-bold mb-3">Popup Notice Control</h3>
+      <textarea id="noticeText" class="input" rows="5" placeholder="Notice text..."></textarea>
+      <label class="flex items-center gap-2 mb-3"><input type="checkbox" id="noticeActive"> Show Popup</label>
+      <button onclick="saveNotice()" class="btn">Save Notice</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="p-4 hidden">
+    <div class="card">
+      <h3 class="font-bold mb-3">Site Settings</h3>
+      <input id="siteName" placeholder="Site Name" class="input">
+      <input id="minDeposit" type="number" placeholder="Min Deposit BDT" class="input">
+      <input id="minWithdraw" type="number" placeholder="Min Withdraw BDT" class="input">
+      <input id="floatLogo" placeholder="Floating Button Logo URL" class="input">
+      <input id="whatsappNum" placeholder="WhatsApp Number +880..." class="input">
+      <button onclick="saveSettings()" class="btn">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== FIREBASE CONFIG - তোমারটা বসাও ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBQUoSSFE5SrLIRTz1sKEgONkmSSlILYOE",
+  authDomain: "him-ai-inc.firebaseapp.com",
+  projectId: "him-ai-inc",
+  storageBucket: "him-ai-inc.firebasestorage.app",
+  messagingSenderId: "451599676781",
+  appId: "1:451599676781:web:ae4aab7a25c5c7a97f1664",
+  measurementId: "G-Y24ZWVWLGW"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const ADMIN_EMAIL = "him-ai-admin@gmail.com"; // Admin email সেট করো
+
+// ========== AUTH ==========
+function adminLogin() {
+  const email = document.getElementById('adminEmail').value;
+  const pass = document.getElementById('adminPass').value;
+  auth.signInWithEmailAndPassword(email, pass).then(u => {
+    if(u.user.email === ADMIN_EMAIL) {
+      document.getElementById('loginDiv').classList.add('hidden');
+      document.getElementById('adminPanel').classList.remove('hidden');
+      loadDashboard();
+    } else {
+      alert('Admin access only!');
+      auth.signOut();
+    }
+  }).catch(e => alert(e.message));
+}
+
+function logout() { auth.signOut(); location.reload(); }
+
+// ========== TABS ==========
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.remove('hidden');
+  
+  if(tab === 'users') loadUsers();
+  if(tab === 'deposit') loadDeposits();
+  if(tab === 'withdraw') loadWithdraws();
+  if(tab === 'plans') loadPlans();
+  if(tab === 'tasks') loadTasks();
+  if(tab === 'slider') loadSliders();
+  if(tab === 'notice') loadNotice();
+  if(tab === 'settings') loadSettings();
+}
+
+// ========== DASHBOARD ==========
+async function loadDashboard() {
+  const users = await db.collection('users').get();
+  const deposits = await db.collection('deposits').where('status','==','approved').get();
+  const withdraws = await db.collection('withdrawals').where('status','==','success').get();
+  const pendingD = await db.collection('deposits').where('status','==','pending').get();
+  const pendingW = await db.collection('withdrawals').where('status','==','pending').get();
+  
+  document.getElementById('totalUsers').innerText = users.size;
+  let totalDep = 0; deposits.forEach(d => totalDep += d.data().amount);
+  let totalWit = 0; withdraws.forEach(w => totalWit += w.data().amount);
+  document.getElementById('totalDeposit').innerText = totalDep + ' BDT';
+  document.getElementById('totalWithdraw').innerText = totalWit + ' BDT';
+  document.getElementById('pendingCount').innerText = pendingD.size + pendingW.size;
+}
+
+// ========== USERS ==========
+async function loadUsers() {
+  const snap = await db.collection('users').get();
+  let html = '';
+  snap.forEach(doc => {
+    const u = doc.data();
+    html += `<div class="card mb-3"><div class="flex justify-between">
+      <div><p class="font-bold">${u.name} ${u.locked?'🔒':''}</p>
+      <p class="text-sm text-gray-400">${u.phone} | Balance: ${u.balance} BDT</p></div>
+      <div class="flex gap-2">
+        <button onclick="editBalance('${doc.id}', ${u.balance})" class="btn">Balance</button>
+        <button onclick="toggleLock('${doc.id}', ${u.locked})" class="${u.locked?'btn-success':'btn-danger'} btn">${u.locked?'Unlock':'Lock'}</button>
+      </div></div></div>`;
+  });
+  document.getElementById('usersList').innerHTML = html;
+}
+
+async function toggleLock(uid, locked) {
+  await db.collection('users').doc(uid).update({locked:!locked});
+  loadUsers();
+}
+
+async function editBalance(uid, current) {
+  const amount = prompt('New Balance:', current);
+  if(amount !== null) {
+    await db.collection('users').doc(uid).update({balance: parseFloat(amount)});
+    loadUsers();
+  }
+}
+
+// ========== DEPOSIT ==========
+async function loadDeposits() {
+  const snap = await db.collection('deposits').where('status','==','pending').get();
+  let html = '';
+  snap.forEach(doc => {
+    const d = doc.data();
+    html += `<div class="card mb-3"><div class="flex justify-between items-start">
+      <div><p class="font-bold">${d.userName}</p>
+      <p class="text-sm">${d.method} | ${d.amount} BDT | ${d.trxId}</p>
+      <img src="${d.screenshot}" class="w-40 h-40 object-cover rounded mt-2"></div>
+      <div class="flex gap-2">
+        <button onclick="approveDeposit('${doc.id}', ${d.amount}, '${d.userId}')" class="btn btn-success">Approve</button>
+        <button onclick="rejectDeposit('${doc.id}')" class="btn btn-danger">Reject</button>
+      </div></div></div>`;
+  });
+  document.getElementById('depositList').innerHTML = html || '<p class="text-gray-400">No pending deposits</p>';
+}
+
+async function approveDeposit(id, amount, uid) {
+  await db.collection('deposits').doc(id).update({status:'approved'});
+  await db.collection('users').doc(uid).update({balance: firebase.firestore.FieldValue.increment(amount)});
+  loadDeposits(); loadDashboard();
+}
+
+async function rejectDeposit(id) {
+  await db.collection('deposits').doc(id).update({status:'rejected'});
+  loadDeposits();
+}
+
+// ========== WITHDRAW ==========
+async function loadWithdraws() {
+  const snap = await db.collection('withdrawals').where('status','==','pending').get();
+  let html = '';
+  snap.forEach(doc => {
+    const w = doc.data();
+    html += `<div class="card mb-3"><div class="flex justify-between">
+      <div><p class="font-bold">${w.userName}</p>
+      <p class="text-sm">${w.method} | ${w.amount} BDT</p>
+      <p class="text-xs text-gray-400">${w.number}</p></div>
+      <div class="flex gap-2">
+        <button onclick="approveWithdraw('${doc.id}')" class="btn btn-success">Paid</button>
+        <button onclick="rejectWithdraw('${doc.id}', ${w.amount}, '${w.userId}')" class="btn btn-danger">Reject</button>
+      </div></div></div>`;
+  });
+  document.getElementById('withdrawList').innerHTML = html || '<p class="text-gray-400">No pending withdrawals</p>';
+}
+
+async function approveWithdraw(id) {
+  await db.collection('withdrawals').doc(id).update({status:'success'});
+  loadWithdraws(); loadDashboard();
+}
+
+async function rejectWithdraw(id, amount, uid) {
+  await db.collection('withdrawals').doc(id).update({status:'failed'});
+  await db.collection('users').doc(uid).update({balance: firebase.firestore.FieldValue.increment(amount)});
+  loadWithdraws();
+}
+
+// ========== PLANS ==========
+async function loadPlans() {
+  const snap = await db.collection('plans').orderBy('price').get();
+  let html = '';
+  snap.forEach(doc => {
+    const p = doc.data();
+    html += `<div class="card mb-3 flex justify-between"><div>
+      <p class="font-bold">${p.name}</p>
+      <p class="text-sm">Price: ${p.price} BDT | Daily: ${p.daily} BDT | Days: ${p.days}</p></div>
+      <div class="flex gap-2"><button onclick="editPlan('${doc.id}')" class="btn">Edit</button>
+      <button onclick="deletePlan('${doc.id}')" class="btn btn-danger">Delete</button></div></div>`;
+  });
+  document.getElementById('plansList').innerHTML = html;
+}
+
+async function savePlan() {
+  const id = document.getElementById('planId').value;
+  const data = {
+    name: document.getElementById('planName').value,
+    price: parseFloat(document.getElementById('planPrice').value),
+    daily: parseFloat(document.getElementById('planDaily').value),
+    days: parseInt(document.getElementById('planDays').value)
+  };
+  if(id) await db.collection('plans').doc(id).update(data);
+  else await db.collection('plans').add(data);
+  clearPlanForm(); loadPlans();
+}
+
+function editPlan(id) {
+  db.collection('plans').doc(id).get().then(doc => {
+    const p = doc.data();
+    document.getElementById('planId').value = id;
+    document.getElementById('planName').value = p.name;
+    document.getElementById('planPrice').value = p.price;
+    document.getElementById('planDaily').value = p.daily;
+    document.getElementById('planDays').value = p.days;
+  });
+}
+
+async function deletePlan(id) {
+  if(confirm('Delete this plan?')) {
+    await db.collection('plans').doc(id).delete();
+    loadPlans();
+  }
+}
+
+function clearPlanForm() {
+  document.getElementById('planId').value = '';
+  document.getElementById('planName').value = '';
+  document.getElementById('planPrice').value = '';
+  document.getElementById('planDaily').value = '';
+  document.getElementById('planDays').value = '';
+}
+
+// ========== TASKS ==========
+async function loadTasks() {
+  const snap = await db.collection('tasks').get();
+  let html = '';
+  snap.forEach(doc => {
+    const t = doc.data();
+    html += `<div class="card mb-3 flex justify-between"><div>
+      <p class="font-bold">${t.title}</p>
+      <p class="text-sm">Reward: ${t.reward} BDT | VIP: ${t.vipLevel}</p></div>
+      <div class="flex gap-2"><button onclick="editTask('${doc.id}')" class="btn">Edit</button>
+      <button onclick="deleteTask('${doc.id}')" class="btn btn-danger">Delete</button></div></div>`;
+  });
+  document.getElementById('tasksList').innerHTML = html;
+}
+
+async function saveTask() {
+  const id = document.getElementById('taskId').value;
+  const data = {
+    title: document.getElementById('taskTitle').value,
+    desc: document.getElementById('taskDesc').value,
+    reward: parseFloat(document.getElementById('taskReward').value),
+    vipLevel: parseInt(document.getElementById('taskVipLevel').value)
+  };
+  if(id) await db.collection('tasks').doc(id).update(data);
+  else await db.collection('tasks').add(data);
+  clearTaskForm(); loadTasks();
+}
+
+function editTask(id) {
+  db.collection('tasks').doc(id).get().then(doc => {
+    const t = doc.data();
+    document.getElementById('taskId').value = id;
+    document.getElementById('taskTitle').value = t.title;
+    document.getElementById('taskDesc').value = t.desc;
+    document.getElementById('taskReward').value = t.reward;
+    document.getElementById('taskVipLevel').value = t.vipLevel;
+  });
+}
+
+async function deleteTask(id) {
+  if(confirm('Delete task?')) {
+    await db.collection('tasks').doc(id).delete();
+    loadTasks();
+  }
+}
+
+function clearTaskForm() {
+  document.getElementById('taskId').value = '';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDesc').value = '';
+  document.getElementById('taskReward').value = '';
+  document.getElementById('taskVipLevel').value = '0';
+}
+
+// ========== SLIDER ==========
+async function loadSliders() {
+  const snap = await db.collection('sliders').get();
+  let html = '';
+  snap.forEach(doc => {
+    html += `<div class="card"><img src="${doc.data().url}" class="w-full h-32 object-cover rounded mb-2">
+      <button onclick="deleteSlider('${doc.id}')" class="btn btn-danger w-full">Delete</button></div>`;
+  });
+  document.getElementById('sliderList').innerHTML = html;
+}
+
+async function addSlider() {
+  const url = document.getElementById('sliderUrl').value;
+  if(url) {
+    await db.collection('sliders').add({url});
+    document.getElementById('sliderUrl').value = '';
+    loadSliders();
+  }
+}
+
+async function deleteSlider(id) {
+  await db.collection('sliders').doc(id).delete();
+  loadSliders();
+}
+
+// ========== NOTICE ==========
+async function loadNotice() {
+  const doc = await db.collection('settings').doc('notice').get();
+  if(doc.exists) {
+    document.getElementById('noticeText').value = doc.data().text || '';
+    document.getElementById('noticeActive').checked = doc.data().active || false;
+  }
+}
+
+async function saveNotice() {
+  await db.collection('settings').doc('notice').set({
+    text: document.getElementById('noticeText').value,
+    active: document.getElementById('noticeActive').checked
+  });
+  alert('Notice Saved!');
+}
+
+// ========== SETTINGS ==========
+async function loadSettings() {
+  const doc = await db.collection('settings').doc('config').get();
+  if(doc.exists) {
+    const s = doc.data();
+    document.getElementById('siteName').value = s.siteName || '';
+    document.getElementById('minDeposit').value = s.minDeposit || '';
+    document.getElementById('minWithdraw').value = s.minWithdraw || '';
+    document.getElementById('floatLogo').value = s.floatLogo || '';
+    document.getElementById('whatsappNum').value = s.whatsappNum || '';
+  }
+}
+
+async function saveSettings() {
+  await db.collection('settings').doc('config').set({
+    siteName: document.getElementById('siteName').value,
+    minDeposit: parseFloat(document.getElementById('minDeposit').value),
+    minWithdraw: parseFloat(document.getElementById('minWithdraw').value),
+    floatLogo: document.getElementById('floatLogo').value,
+    whatsappNum: document.getElementById('whatsappNum').value
+  });
+  alert('Settings Saved!');
+}
+</script>
+</body>
+</html>
