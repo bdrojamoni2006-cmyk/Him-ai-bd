@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HIM AI INC</title>
+    
+     <link rel="icon" type="image/x-icon" href="https://himai-inc.top/assets/favicon.png">     
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; overflow-x: hidden; }
+        
+        /* ফ্লোটিং বাটন মেইন কন্টেইনার */
+        #draggable-btn {
+            position: fixed;
+            bottom: 85px; 
+            right: 20px;
+            z-index: 9999;
+            touch-action: none; 
+            cursor: grab;
+            user-select: none;
+        }
+
+        #draggable-btn:active { cursor: grabbing; }
+
+        /* বাটনটি গোল করার স্টাইল (কোনো বর্ডার বা শ্যাডো নেই) */
+        .btn-container {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* লোগোকে গোল শেপে কেটে নিবে */
+            background: transparent; /* ব্যাকগ্রাউন্ডে কোনো রঙ নেই */
+        }
+
+        /* এডমিন থেকে আসা লোগো ইমেজ */
+        .btn-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* ইমেজ যে সাইজেরই হোক গোল ফ্রেম পূর্ণ করবে */
+        }
+
+        /* লোগো না থাকলে ডিফল্ট আইকন স্টাইল */
+        .default-icon {
+            background: #2563eb; /* লোগো না থাকলে নীল ব্যাকগ্রাউন্ড */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- সাদা-কালো থিমের সাথে সামঞ্জস্যপূর্ণ হেডার (২px কালো বটম বর্ডার সহ) -->
+<header class="p-4 flex justify-start items-center text-black bg-white border-b-2 border-black">
+    <!-- ল্যাঙ্গুয়েজ বাটন: এখন আর কোনো রিফ্রেশ হবে না -->
+    <button onclick="toggleLanguage()" id="lang_btn" data-lang="en" class="text-sm font-bold">
+        Language
+    </button>
+</header>
+
+<script>
+    function toggleLanguage() {
+        const btn = document.getElementById('lang_btn');
+        let currentLang = btn.getAttribute('data-lang');
+        let newLang = (currentLang === 'en') ? 'bn' : 'en';
+
+        // ১. বাটনের টেক্সট সাথে সাথে আপডেট
+        btn.innerText = (newLang === 'bn') ? 'ভাষা' : 'Language';
+        btn.setAttribute('data-lang', newLang);
+
+        // ২. ব্যাকএন্ডে সেশন আপডেট করা (রিফ্রেশ ছাড়া)
+        fetch("https://himai-inc.top/change-lang", {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRF-TOKEN': 'XitSYofdTEZzaAjngV75yfTHvpam6qQdWbe5EUoN' 
+            },
+            body: JSON.stringify({ lang: newLang })
+        });
+        
+        // ৩. ড্যাশবোর্ড পেজে সিগন্যাল পাঠানো
+        window.dispatchEvent(new CustomEvent('langChanged', { detail: newLang }));
+    }
+</script>    
+    <main id="main-content">
+        
+
+<!-- ব্যাকগ্রাউন্ড ও সাদা-কালো থিম স্টাইল -->
+<style>
+    .bg-custom-light { 
+        background-color: #ffffff; /* পিওর হোয়াইট ব্যাকগ্রাউন্ড */
+        min-height: 100vh; 
+        color: #000000; 
+        font-family: 'Inter', sans-serif; 
+    }
+</style>
+
+<div class="bg-custom-light pb-24 max-w-[420px] mx-auto">
+    
+    <!-- স্লাইডার সেকশন: কোনো সাইড স্পেস ও রাউন্ডিং ছাড়া সম্পূর্ণ ফ্ল্যাট ফুল ডিসপ্লে ব্যানার -->
+        <div class="relative w-full h-48 overflow-hidden bg-white mb-4 shadow-sm">
+        <div id="slider" class="flex transition-transform duration-1000 ease-in-out w-full h-full">
+                            <img src="https://himai-inc.top/assets/sliders/1779221348.jpg" class="w-full h-full object-cover flex-shrink-0">
+                            <img src="https://himai-inc.top/assets/sliders/1779221359.jpg" class="w-full h-full object-cover flex-shrink-0">
+                    </div>
+    </div>
+        
+    <!-- স্লাইডারের নিচের কন্টেন্ট সমূহ -->
+    <div class="px-4">
+        
+        <!-- নোটিশ বার (ব্যাকগ্রাউন্ড ছাড়া এবং ফুল স্ক্রিন) -->
+        <div class="flex items-center gap-2.5 px-4 py-3 text-xs text-red-600 font-bold overflow-hidden mb-6 border-0 -mx-4">
+            <i class="fa-solid fa-bullhorn text-red-600 animate-bounce flex-shrink-0"></i>
+            <marquee behavior="scroll" direction="left" scrollamount="4">
+                <p class="whitespace-nowrap font-bold text-red-600">সম্মানিত সদস্যবৃন্দ,
+Dear Esteemed Members,
+
+HIM AI INC কোম্পানিতে আপনাদের স্বাগত জানাই। আপনাদের দক্ষতা ও সহযোগিতায় আমরা আরও এগিয়ে যাবো বলে আশাবাদী।
+We welcome you to HIM AI INC Company. We are hopeful that with your skills and cooperation we will move forward further.
+
+নির্দেশনা:
+Instruction:
+
+কোম্পানির নীতিমালা অনুযায়ী, একটি মোবাইল ডিভাইসে একাধিক অ্যাকাউন্ট তৈরি ও ব্যবহার কঠোরভাবে নিষিদ্ধ। এই নিয়ম অমান্য করলে অ্যাকাউন্ট বরখাস্ত করা হবে।
+According to company policy, creating and using multiple accounts on a single mobile device is strictly prohibited. If this rule is violated, the account will be suspended.
+
+সকলকে নিয়ম মেনে কাজ করার অনুরোধ রইলো।
+We request everyone to work following the rules.
+
+ধন্যবাদান্তে,
+Sincerely,
+
+HIM AI INC কর্তৃপক্ষ
+HIM AI INC Authority</p>
+            </marquee>
+        </div>
+
+        <!-- কুইক মেনু গ্রিড (প্রোফাইলের মতো ৫টি বর্ডারহীন মডার্ন বাটন সিস্টেম করা হয়েছে) -->
+        <div class="grid grid-cols-5 gap-2 mb-6">
+
+
+                        <a href="https://himai-inc.top/user/deposit" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-wallet text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Recharge" 
+                      data-bn="রির্চাজ">
+                      Recharge
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/user/withdraw" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-credit-card text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Withdraw" 
+                      data-bn="প্রত্যাহার">
+                      Withdraw
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/invite" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-gift text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Invite" 
+                      data-bn="আমন্ত্রণ">
+                      Invite
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/user/team" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-users text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Team" 
+                      data-bn="টিম">
+                      Team
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/lucky-wheel" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-dharmachakra text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Lucky Wheel" 
+                      data-bn="লাকি হুইল">
+                      Lucky Wheel
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/company" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-building text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="Company" 
+                      data-bn="কোম্পানি">
+                      Company
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/license-and-agreement" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-shield-halved text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="License" 
+                      data-bn="লাইসেন্স">
+                      License
+                </span>
+            </a>
+                        <a href="https://himai-inc.top/transaction-history" class="bg-transparent rounded-2xl p-2 flex flex-col items-center justify-center active:scale-95 transition-all border-0">
+                <i class="fa-solid fa-clock-rotate-left text-xl text-black mb-2"></i>
+                <span class="text-[9px] font-black text-slate-800 mt-1 text-center menu-text leading-tight" 
+                      data-en="All Record" 
+                      data-bn="সব তথ্য">
+                      All Record
+                </span>
+            </a>
+                    </div> 
+
+        <!-- ব্যাংক প্রফিট বাটন (সাদা-কালো ২px থিম) -->
+        <a href="https://himai-inc.top/bank-profit/check" class="relative overflow-hidden w-full border border-[#bcd6f7] rounded-3xl p-3.5 md:p-4.5 flex items-center justify-between mb-4 bg-gradient-to-r from-[#eaf3fc] via-[#f5f9fd] to-white shadow-[0_8px_20px_-6px_rgba(59,130,246,0.15)] active:scale-[0.98] transition-all duration-300 no-underline group">
+            
+            <!-- ব্যাকগ্রাউন্ড ডট গ্রিড (বাম পাশে) - সাইজ সামান্য ছোট করা হয়েছে -->
+            <svg class="absolute left-2.5 top-5 w-5 h-10 opacity-35 text-blue-400 pointer-events-none" fill="currentColor" viewBox="0 0 15 30">
+                <circle cx="3" cy="4" r="1.2"/>
+                <circle cx="9" cy="4" r="1.2"/>
+                <circle cx="3" cy="10" r="1.2"/>
+                <circle cx="9" cy="10" r="1.2"/>
+                <circle cx="3" cy="16" r="1.2"/>
+                <circle cx="9" cy="16" r="1.2"/>
+                <circle cx="3" cy="22" r="1.2"/>
+                <circle cx="9" cy="22" r="1.2"/>
+                <circle cx="3" cy="28" r="1.2"/>
+                <circle cx="9" cy="28" r="1.2"/>
+            </svg>
+
+            <!-- ব্যাকগ্রাউন্ড ওয়েভ/ঢেউ (নিচে বামে) - সাইজ ছোট করা হয়েছে -->
+            <svg class="absolute bottom-0 left-0 w-20 h-9 pointer-events-none opacity-40" viewBox="0 0 120 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 50V35C20 20 40 45 60 30C80 15 100 45 120 40V50H0Z" fill="url(#blue-wave-grad-small)"/>
+                <defs>
+                    <linearGradient id="blue-wave-grad-small" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3b82f6" />
+                        <stop offset="100%" stop-color="#93c5fd" />
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <!-- ব্যাকগ্রাউন্ড কনট্যুর লাইনস (নিচে ডানে) - সাইজ ছোট করা হয়েছে -->
+            <svg class="absolute bottom-0 right-0 w-32 h-12 pointer-events-none opacity-20" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 50 C 50 35, 100 45, 150 20 C 170 10, 190 15, 200 20" stroke="#93c5fd" stroke-width="1.2" />
+                <path d="M0 55 C 50 40, 100 50, 150 25 C 170 15, 190 20, 200 25" stroke="#93c5fd" stroke-width="1.2" />
+                <path d="M0 60 C 50 45, 100 55, 150 30 C 170 20, 190 25, 200 30" stroke="#93c5fd" stroke-width="1.2" />
+            </svg>
+
+            <!-- ৪-কোণা স্টার/স্পার্কেল আইকন (উপরে ডানে) - সাইজ ও পজিশন ছোট করা হয়েছে -->
+            <svg class="absolute top-3 right-8 w-3 h-3 text-blue-400 opacity-80 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0c.3 4.2 3.8 7.7 8 8-4.2.3-7.7 3.8-8 8-.3-4.2-3.8-7.7-8-8 4.2-.3 7.7-3.8 8-8z"/>
+            </svg>
+
+            <div class="flex items-center gap-3 md:gap-4 relative z-10">
+                <!-- ব্যাংক আইকন কন্টেইনার (সাইজ কিছুটা কমিয়ে সামঞ্জস্যপূর্ণ করা হয়েছে) -->
+                <div class="w-13 h-13 md:w-16 md:h-16 rounded-full bg-[#d6e8fc] border-[3px] border-[#ecf4fd] flex items-center justify-center shrink-0 shadow-[0_3px_8px_rgba(59,130,246,0.08)]">
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-b from-[#4facfe] to-[#0086ff] text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-building-columns text-base md:text-lg"></i>
+                    </div>
+                </div>
+                
+                <!-- টেক্সট কন্টেইনার (সাইজ কিছুটা ছোট করা হয়েছে) -->
+                <div class="flex flex-col text-left">
+                    <span class="font-extrabold text-base md:text-lg text-[#102d4d] tracking-wide">
+                        Bank Profit
+                    </span>
+                    <span class="text-[9px] md:text-[11px] text-[#5d7d9d] font-semibold mt-0.5">
+                        Simplify your daily transactions
+                    </span>
+                </div>
+            </div>
+
+            <!-- ডান পাশের আইকনসমূহ (সাইজ সামঞ্জস্যপূর্ণভাবে কমানো হয়েছে) -->
+            <div class="flex items-center gap-2 md:gap-3 text-[#1e6eff] relative z-10 shrink-0">
+                <!-- ছোট গোল মানি-ব্যাগ আইকন -->
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#e1effe] border border-white/80 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-sack-dollar text-xs md:text-base text-[#2575fc]"></i>
+                </div>
+                <!-- রাইট অ্যারো -->
+                <i class="fa-solid fa-chevron-right text-[10px] md:text-xs font-bold opacity-80 group-hover:translate-x-0.5 transition-transform"></i>
+            </div>
+        </a>
+
+        <!-- মেম্বারশিপ লিস্ট সেকশন (২px কালো ডট এবং কালো টাইটেল সহ) -->
+        <div class="mb-4">
+            <h3 class="text-xs font-black mb-4 text-black uppercase flex items-center gap-1.5 ml-1">
+                <span class="w-1 h-3.5 bg-black rounded"></span>
+                Membership Live Activation
+            </h3>
+            <!-- মেম্বারশিপ লিস্ট টাইটেল (লাইট থিম) -->
+<h2 class="text-sm font-bold mb-3 text-slate-800" id="member_title" 
+    data-en="Membership list" data-bn="সদস্য তালিকা">
+    Membership list
+</h2>
+
+<div class="h-[280px] overflow-hidden relative" id="mask-container"> 
+    <div id="scrolling-list" class="flex flex-col"></div>
+</div>
+
+<style>
+    /* মাস্ক ইফেক্ট (লাইট থিমে স্মুথ ব্লার করার জন্য) */
+    #mask-container { 
+        mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); 
+        -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); 
+    }
+    
+    /* মিডিয়াম গতির জন্য লুপ অ্যানিমেশন সেটআপ */
+    @keyframes scroll { 
+        0% { transform: translateY(0); } 
+        100% { transform: translateY(-50%); } 
+    }
+    .animate-scroll { 
+        animation: scroll 80s linear infinite; /* ৮০ সেকেন্ডে মিডিয়াম গতিশীল স্ক্রোল হবে */
+        pointer-events: none; 
+    }
+</style>
+
+<script>
+    const generateMembers = (count) => {
+        let list =[];
+        for (let i = 1; i <= count; i++) {
+            let randomAmount = (Math.floor(Math.random() * 50) + 1) * 100;
+            let randomTask = Math.floor(Math.random() * 10) + 1;
+            list.push({
+                name: "****" + (1000 + i),
+                amount: randomAmount + " BDT",
+                task: "Completed " + randomTask + " tasks",
+                img: `https://i.pravatar.cc/100?u=${i}`
+            });
+        }
+        return list;
+    };
+
+    const members = generateMembers(30); 
+    const list = document.getElementById('scrolling-list');
+    
+    list.className = "flex flex-col animate-scroll";
+    
+    // লাইট থিমের কালার ও বর্ডার সহ ডাইনামিক রেন্ডারিং
+    list.innerHTML = members.map(m => `
+        <div class="flex items-center gap-3 py-3 w-full border-b border-slate-100">
+            <img src="${m.img}" class="w-10 h-10 rounded-full border border-slate-200">
+            <div class="flex-1">
+                <div class="text-xs font-bold text-slate-800 congrats-text" data-en="Congratulations" data-bn="অভিনন্দন">
+                    ${'' == 'bn' ? 'অভিনন্দন' : 'Congratulations'} ${m.name}
+                </div>
+                <div class="text-[10px] text-slate-500">${m.task}</div>
+            </div>
+            <div class="text-xs font-bold text-blue-600">${m.amount}</div>
+        </div>
+    `).join('').repeat(2);
+
+    // ল্যাঙ্গুয়েজ ট্র্যাকার ইভেন্ট
+    window.addEventListener('langChanged', function(e) {
+        const lang = e.detail;
+        const memTitle = document.getElementById('member_title');
+        memTitle.innerText = memTitle.getAttribute('data-' + lang);
+        
+        document.querySelectorAll('.congrats-text').forEach(el => {
+            const name = el.innerText.split(' ').pop();
+            el.innerText = el.getAttribute('data-' + lang) + ' ' + name;
+        });
+    });
+</script>        </div>
+    </div>
+</div>
+
+<style>
+    #mask-container { mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); }
+    @keyframes scroll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+    .animate-scroll { animation: scroll 20s linear infinite; pointer-events: none; }
+</style>
+
+<script>
+    // ল্যাঙ্গুয়েজ ইভেন্ট লিসেনার
+    window.addEventListener('langChanged', function(e) {
+        const lang = e.detail;
+        document.querySelectorAll('.menu-text').forEach(el => {
+            el.innerText = el.getAttribute('data-' + lang);
+        });
+    });
+
+    // স্লাইড শো অটোমেটিক স্লাইডার স্ক্রিপ্ট
+    let currentIndex = 0;
+    const slides = document.getElementById('slider');
+    const totalSlides = 2;
+    function autoSlide() { 
+        if(totalSlides > 0 && slides) { 
+            currentIndex = (currentIndex + 1) % totalSlides; 
+            slides.style.transform = `translateX(-${currentIndex * 100}%)`; 
+        } 
+    }
+    if(totalSlides > 0) setInterval(autoSlide, 3000);
+</script> 
+
+<!-- পপ-আপের ফন্ট এবং কাস্টম ট্রানজিশন স্টাইল -->
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+<style>
+    .modal-font { font-family: 'Fredoka', sans-serif; }
+    .modal-animate-in {
+        animation: fadeInScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes fadeInScale {
+        0% { transform: scale(0.9); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+
+<!-- ডাইনামিক নোটিশ পপ-আপ (অ্যাডমিন কন্ট্রোলড - সলিড ডাটাবেজ চেকিং সহ) -->
+    </main>
+
+    <!-- ড্র্যাগেবল বাটন -->
+        <div id="draggable-btn">
+        <a href="https://wa.me/+44 7727 737698" target="_blank" class="btn-container">
+                            <img src="https://himai-inc.top/assets/floating_icon.jpg" alt="Support">
+                    </a>
+    </div>
+        
+    <!-- লাইট থিম পেজের থিমের সাথে সামঞ্জস্যপূর্ণ সাদা-কালো ফুটার -->
+<footer class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t-2 border-white p-2 flex justify-around text-[10px] z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
+    
+    <!-- প্রথম পাতা (Home) -->
+    <a href="https://himai-inc.top/dashboard" class="flex flex-col items-center transition text-black font-extrabold">
+        <i class="fa fa-home text-lg mb-0.5"></i>
+        <span class="nav-text" data-en="Home" data-bn="প্রথম পাতা">Home</span>
+    </a>
+    
+    <!-- ভূমিকা (Intro) -->
+    <a href="https://himai-inc.top/intro" class="flex flex-col items-center transition text-black/50 hover:text-black">
+        <i class="fa fa-info-circle text-lg mb-0.5"></i>
+        <span class="nav-text" data-en="Intro" data-bn="ভূমিকা">Intro</span>
+    </a>
+
+    <!-- মেম্বারশিপ প্ল্যান (Plans) -->
+    <a href="https://himai-inc.top/user/plan" class="flex flex-col items-center transition text-black/50 hover:text-black">
+        <i class="fa fa-diamond text-lg mb-0.5"></i>
+        <span class="nav-text" data-en="Plans" data-bn="প্ল্যান">Plans</span>
+    </a>
+
+    <!-- টাস্ক সেন্টার (Task) -->
+    <a href="https://himai-inc.top/user/tasks" class="flex flex-col items-center transition text-black/50 hover:text-black">
+        <i class="fa fa-tasks text-lg mb-0.5"></i>
+        <span class="nav-text" data-en="Task" data-bn="টাস্ক">Task</span>
+    </a>
+
+    <!-- প্রোফাইল (Profile) -->
+    <a href="https://himai-inc.top/user/profile" class="flex flex-col items-center transition text-black/50 hover:text-black">
+        <i class="fa fa-user text-lg mb-0.5"></i>
+        <span class="nav-text" data-en="Profile" data-bn="ব্যক্তিগত কেন্দ্র">Profile</span>
+    </a>
+</footer>
+
+<script>
+    // ল্যাঙ্গুয়েজ চেঞ্জ ইভেন্ট লিসেনার
+    window.addEventListener('langChanged', function(e) {
+        const lang = e.detail; 
+        
+        document.querySelectorAll('.nav-text').forEach(el => {
+            el.innerText = el.getAttribute('data-' + lang);
+        });
+    });
+</script>
+    <script>
+        // বাটন ড্র্যাগিং এবং পজিশন সেভ করার স্ক্রিপ্ট
+        const dragBtn = document.getElementById('draggable-btn');
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
+
+        // পেজ লোড হলে সেভ করা পজিশন বসানো
+        window.addEventListener('load', () => {
+            const savedPos = JSON.parse(localStorage.getItem('floatingBtnPos'));
+            if (savedPos && dragBtn) {
+                dragBtn.style.left = savedPos.x + 'px';
+                dragBtn.style.top = savedPos.y + 'px';
+                dragBtn.style.bottom = 'auto';
+                dragBtn.style.right = 'auto';
+            }
+        });
+
+        if (dragBtn) {
+            const startDrag = (e) => {
+                isDragging = true;
+                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                const rect = dragBtn.getBoundingClientRect();
+                offset.x = clientX - rect.left;
+                offset.y = clientY - rect.top;
+            };
+
+            const moveDrag = (e) => {
+                if (!isDragging) return;
+                // মাউস দিয়ে ড্র্যাগ করার সময় যেন ক্লিকে কাজ না করে তার জন্য বাধা দেওয়া
+                if(e.cancelable) e.preventDefault();
+
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+                let x = clientX - offset.x;
+                let y = clientY - offset.y;
+
+                // স্ক্রিন সীমানার ভেতর রাখা
+                x = Math.max(0, Math.min(x, window.innerWidth - dragBtn.offsetWidth));
+                y = Math.max(0, Math.min(y, window.innerHeight - dragBtn.offsetHeight));
+
+                dragBtn.style.left = x + 'px';
+                dragBtn.style.top = y + 'px';
+                dragBtn.style.bottom = 'auto';
+                dragBtn.style.right = 'auto';
+            };
+
+            const stopDrag = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const rect = dragBtn.getBoundingClientRect();
+                localStorage.setItem('floatingBtnPos', JSON.stringify({ x: rect.left, y: rect.top }));
+            };
+
+            dragBtn.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', moveDrag);
+            document.addEventListener('mouseup', stopDrag);
+
+            dragBtn.addEventListener('touchstart', startDrag);
+            document.addEventListener('touchmove', moveDrag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        }
+    </script>
+</body>
+</html>
